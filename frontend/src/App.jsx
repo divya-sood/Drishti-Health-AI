@@ -11,7 +11,40 @@ const LeafyTree = ({ height, style }) => (
 function App() {
   const [isLogin, setIsLogin] = useState(true);
   const [method, setMethod] = useState('email'); 
-  const [authType, setAuthType] = useState('password');
+
+  // FORM STATE
+  const [loginName, setLoginName] = useState('');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    
+    // Switch endpoint based on Login or Signup mode
+    const endpoint = isLogin ? '/api/login' : '/api/signup';
+
+    try {
+      const response = await fetch(`http://127.0.0.1:5000${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          loginName, 
+          identifier, 
+          password 
+          // authType removed to match password-only backend
+        }),
+      });
+
+      const data = await response.json();
+      alert(data.message);
+      
+      if (response.ok && !isLogin) {
+        setIsLogin(true); // Switch to login view after successful signup
+      }
+    } catch (error) {
+      alert("Error: Backend server is not responding.");
+    }
+  };
 
   const stars = Array.from({ length: 180 }).map((_, i) => ({
     id: i,
@@ -23,17 +56,12 @@ function App() {
 
   return (
     <div className="drishti-container">
-      {/* 1. BACKGROUND SKY */}
-      <div style={{ position: 'absolute', top: '8%', right: '12%', width: '60px', height: '60px', borderRadius: '50%', boxShadow: '-12px 12px 0 0 rgba(255,255,255,0.8)', transform: 'rotate(-20deg)', filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.2))' }}></div>
-      
-      {/* STARS */}
+      {/* BACKGROUND ELEMENTS */}
+      <div style={{ position: 'absolute', top: '8%', right: '12%', width: '60px', height: '60px', borderRadius: '50%', boxShadow: '-12px 12px 0 0 rgba(255,255,255,0.8)', transform: 'rotate(-20deg)' }}></div>
       {stars.map(s => <div key={s.id} className="star" style={{ top: s.top, left: s.left, width: s.size, height: s.size, '--d': s.dur }} />)}
-
-      {/* SHOOTING COMETS */}
       <div className="comet" style={{ top: '10%', left: '85%', width: '180px', '--s': '7s' }}></div>
-      <div className="comet" style={{ top: '25%', left: '95%', width: '140px', '--s': '11s', animationDelay: '4s' }}></div>
 
-      {/* 2. DENSE SIDE FORESTS */}
+      {/* FORESTS */}
       <div style={{left: '3%', position: 'absolute', bottom: 0, display: 'flex', alignItems: 'flex-end', opacity: 0.8}}>
         {[300, 200, 350].map((h, i) => <LeafyTree key={i} height={h} style={{marginLeft: i === 0 ? 0 : '-40px'}} />)}
       </div>
@@ -41,30 +69,28 @@ function App() {
         {[350, 200, 300].map((h, i) => <LeafyTree key={i} height={h} style={{marginRight: i === 0 ? 0 : '-40px'}} />)}
       </div>
 
-      {/* 3. LIGHTER CENTER LOGIN CARD */}
+      {/* AUTH CARD */}
       <div className="auth-card">
         <h1 className="glitter-text">{isLogin ? 'Login' : 'Signup'}</h1>
         <div style={{ height: '1px', width: '50px', background: '#7bd5ff', margin: '15px auto 25px', opacity: 0.5 }}></div>
 
-        {/* Tab Switcher */}
         <div style={{ display: 'flex', gap: '25px', justifyContent: 'center', marginBottom: '25px', fontSize: '0.85rem' }}>
-          <span onClick={() => setMethod('email')} style={{ cursor: 'pointer', color: method === 'email' ? '#7bd5ff' : '#fff', opacity: method === 'email' ? 1 : 0.5 }}>Email</span>
-          <span onClick={() => setMethod('phone')} style={{ cursor: 'pointer', color: method === 'phone' ? '#7bd5ff' : '#fff', opacity: method === 'phone' ? 1 : 0.5 }}>Phone</span>
+          <span onClick={() => setMethod('email')} style={{ cursor: 'pointer', color: method === 'email' ? '#7bd5ff' : '#fff', fontWeight: method === 'email' ? 'bold' : 'normal' }}>Email</span>
+          <span onClick={() => setMethod('phone')} style={{ cursor: 'pointer', color: method === 'phone' ? '#7bd5ff' : '#fff', fontWeight: method === 'phone' ? 'bold' : 'normal' }}>Phone</span>
         </div>
 
-        <form onSubmit={(e) => e.preventDefault()}>
+        <form onSubmit={handleAuth}>
           <div className="input-group">
-            <input type="text" placeholder={method === 'email' ? 'Email Address' : 'Phone Number'} />
+            <input type="text" placeholder="Login Name" value={loginName} onChange={(e) => setLoginName(e.target.value)} required />
           </div>
-
           <div className="input-group">
-            <input type={authType === 'password' ? 'password' : 'text'} placeholder={authType === 'password' ? 'Password' : 'Enter OTP'} />
-            <span onClick={() => setAuthType(authType === 'password' ? 'otp' : 'password')} style={{ fontSize: '0.7rem', color: '#7bd5ff', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              {authType === 'password' ? 'Use OTP' : 'Use Pass'}
-            </span>
+            <input type="text" placeholder={method === 'email' ? 'Email Address' : 'Phone Number'} value={identifier} onChange={(e) => setIdentifier(e.target.value)} required />
           </div>
-
-          <button className="login-btn">
+          <div className="input-group">
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            {/* OTP Toggle Span removed here */}
+          </div>
+          <button type="submit" className="login-btn">
             {isLogin ? 'Continue' : 'Create Account'}
           </button>
         </form>
@@ -75,7 +101,7 @@ function App() {
         </p>
       </div>
 
-      {/* 4. GROUND LAYER */}
+      {/* GROUND */}
       <svg style={{ position: 'absolute', bottom: '-2px', width: '100%', zIndex: 12 }} viewBox="0 0 1440 80" preserveAspectRatio="none">
         <path d="M0,80 L1440,80 L1440,0 C1100,40 400,40 0,0 Z" fill="#050614" />
       </svg>
